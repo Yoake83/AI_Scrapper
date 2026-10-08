@@ -1,0 +1,9 @@
+{
+  "name": "cherry-picked-ai-scraper",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": { "start": "node --env-file-if-exists=.env server.js", "dev": "node --watch --env-file-if-exists=.env server.js", "test": "node --test" },
+  "engines": { "node": ">=22" },
+  "dependencies": { "cheerio": "1.1.2", "express": "5.1.0", "ipaddr.js": "2.2.0" }
+}
