@@ -6,7 +6,7 @@ A full-stack AI web scraper with a cherry-cola and peach palette, animated cherr
 
 - **Frontend:** HTML, CSS, vanilla JavaScript; served by the backend.
 - **Backend:** Node.js 22+, Express, Cheerio for HTML extraction.
-- **AI:** Groq Chat Completions API, `llama-3.3-70b-versatile` by default. Use a Groq free-tier account; no OpenAI key is needed. Free-tier availability and limits are controlled by Groq.
+- **AI:** Groq Chat Completions API, `llama-3.3-70b-versatile` by default. If Groq reports that model unavailable, the backend queries the active model catalog and tries supported text models, starting with `llama-3.1-8b-instant`. Authentication, quota, and other errors are reported without retrying unrelated models. Use a Groq free-tier account; no OpenAI key is needed. Free-tier availability and limits are controlled by Groq.
 
 ## Run locally
 

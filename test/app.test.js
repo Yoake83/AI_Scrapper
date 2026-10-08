@@ -89,7 +89,33 @@ test('Groq integration sends source as data and handles response and rate limits
     };
     assert.equal(await summarizeWithGroq('x'.repeat(24000), 'Title'), 'Summary');
     assert.deepEqual(lengths, [12000, 6000]);
-    globalThis.fetch = async () => new Response(JSON.stringify({error:{code:'model_decommissioned'}}), {status:400});
+    globalThis.fetch = async url => url.endsWith('/models') ? new Response(JSON.stringify({data:[]}), {status:200}) : new Response(JSON.stringify({error:{code:'model_decommissioned'}}), {status:400});
     await assert.rejects(summarizeWithGroq('Text','Title'), /configured Groq model is unavailable/);
   } finally { globalThis.fetch = original; }
+});
+
+ test('discovers and uses an active fallback when the configured model is unavailable', async () => {
+  const original = globalThis.fetch;
+  const calls = [];
+  try {
+    globalThis.fetch = async (url, options) => {
+      if (url.endsWith('/models')) return new Response(JSON.stringify({data:[{id:'llama-3.1-8b-instant',active:true},{id:'whisper-large-v3',active:true}]}), {status:200});
+      const model = JSON.parse(options.body).model;
+      calls.push(model);
+      return calls.length === 1
+        ? new Response(JSON.stringify({error:{code:'model_not_found'}}), {status:404})
+        : new Response(JSON.stringify({choices:[{message:{content:'Fallback summary'}}]}), {status:200});
+    };
+    assert.equal(await summarizeWithGroq('Text','Title'), 'Fallback summary');
+    assert.deepEqual(calls, [process.env.GROQ_MODEL?.trim() || 'llama-3.3-70b-versatile','llama-3.1-8b-instant']);
+  } finally {globalThis.fetch = original;}
+});
+ test('does not misclassify an endpoint 404 as a missing model or retry it', async () => {
+  const original = globalThis.fetch;
+  let calls = 0;
+  try {
+    globalThis.fetch = async () => {calls++; return new Response('{}',{status:404});};
+    await assert.rejects(summarizeWithGroq('Text','Title'), /Groq HTTP 404/);
+    assert.equal(calls,1);
+  } finally {globalThis.fetch = original;}
 });
