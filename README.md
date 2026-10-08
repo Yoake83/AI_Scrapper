@@ -71,7 +71,7 @@ Success returns `title`, final `url`, plain-text `summary`, `wordCount`, and `tr
 
 - Scrapes basic HTML; it does not render JavaScript, bypass login, or bypass bot protection. Some websites reject automated requests.
 - Prefers the first `article`, then `main`, then body text, excluding scripts, navigation, and other common clutter.
-- Limits pages to 2 MiB, follows at most four redirects, and sends up to 24,000 characters to Groq. Long pages show an excerpt notice.
+- Limits pages to 2 MiB, follows at most four redirects, and sends up to 12,000 characters to Groq. Long pages show an excerpt notice. If Groq rejects the request as too large, the app retries once with 6,000 characters.
 - Only public HTTP(S) addresses on standard ports are accepted. Every redirect is checked; DNS addresses are validated and pinned per connection to protect against SSRF and DNS rebinding. TLS verification remains enabled.
 - Scraping times out after 15 seconds; the AI call after 30 seconds. Ten API requests per minute per observed client IP are allowed. Behind a reverse proxy the default may share a limit across clients; configure trusted proxies carefully if scaling.
 - No scraped pages or summaries are stored. Webpage text is sent to Groq for processing. Avoid submitting confidential pages. AI output may miss details; check the original source.

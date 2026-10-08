@@ -70,7 +70,7 @@ export function extractContent(html) {
   root.find('p, h1, h2, h3, h4, li, div, section').each((_, element) => $(element).append('\n'));
   const text = root.text().replace(/[\t ]+/g, ' ').replace(/\n\s*\n/g, '\n').trim();
   if (text.length < 80) throw new AppError('Not enough readable text was found. Try a public article with basic HTML content.', 422);
-  return { title: title.slice(0, 300), text: text.slice(0, 24000), truncated: text.length > 24000 };
+  return { title: title.slice(0, 300), text: text.slice(0, 12000), truncated: text.length > 12000 };
 }
 
 export async function scrape(input) {

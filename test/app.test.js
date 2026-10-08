@@ -20,7 +20,7 @@ test('extracts article content and removes navigation, scripts and footer', () =
 test('rejects insufficient content and reports truncated articles', () => {
   assert.throws(() => extractContent('<body>Empty</body>'), /Not enough/);
   const page = extractContent(`<body><main>${'fruit '.repeat(6000)}</main></body>`);
-  assert.equal(page.text.length, 24000);
+  assert.equal(page.text.length, 12000);
   assert.equal(page.truncated, true);
 });
 test('URL validation rejects dangerous schemes, credentials and custom ports', () => {
@@ -74,5 +74,22 @@ test('Groq integration sends source as data and handles response and rate limits
     assert.equal(await summarizeWithGroq('Source text', 'Title'), 'Short summary');
     globalThis.fetch = async () => new Response('{}', { status: 429 });
     await assert.rejects(summarizeWithGroq('Source text', 'Title'), /free-tier limit/);
+  } finally { globalThis.fetch = original; }
+});
+
+ test('Groq retries oversized requests with a shorter excerpt and explains model errors', async () => {
+  const original = globalThis.fetch;
+  try {
+    const lengths = [];
+    globalThis.fetch = async (_url, options) => {
+      lengths.push(JSON.parse(JSON.parse(options.body).messages[1].content).webpageText.length);
+      return lengths.length === 1
+        ? new Response('{}', { status: 413 })
+        : new Response(JSON.stringify({ choices: [{ message: { content: 'Summary' } }] }), { status: 200 });
+    };
+    assert.equal(await summarizeWithGroq('x'.repeat(24000), 'Title'), 'Summary');
+    assert.deepEqual(lengths, [12000, 6000]);
+    globalThis.fetch = async () => new Response(JSON.stringify({error:{code:'model_decommissioned'}}), {status:400});
+    await assert.rejects(summarizeWithGroq('Text','Title'), /configured Groq model is unavailable/);
   } finally { globalThis.fetch = original; }
 });
